@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JLPT 模擬考試</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500&family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #f5f0e8;
+    --red: #c0392b;
+    --gold: #b8860b;
+    --light: #ede8df;
+    --border: #c8b89a;
+    --muted: #7a6f5e;
+    --success: #2e7d52;
+    --fail: #c0392b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(184,134,11,0.08) 31px, rgba(184,134,11,0.08) 32px);
+  }
+
+  .header {
+    background: var(--ink);
+    color: var(--paper);
+    text-align: center;
+    padding: 2rem 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '日本語能力試験';
+    position: absolute;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 8rem;
+    opacity: 0.04;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .header h1 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 2rem;
+    letter-spacing: 0.15em;
+    position: relative;
+  }
+
+  .header p {
+    font-size: 0.85rem;
+    color: var(--border);
+    letter-spacing: 0.2em;
+    margin-top: 0.4rem;
+    font-weight: 300;
+    position: relative;
+  }
+
+  .container { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  .setup-screen { animation: fadeIn 0.5s ease; }
+
+  .setup-card {
+    background: white;
+    border: 1px solid var(--border);
+    padding: 2.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+
+  .setup-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--gold);
+  }
+
+  .section-label {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 1.2rem;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--red);
+    letter-spacing: 0.05em;
+  }
+
+  .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.8rem; }
+
+  .level-btn {
+    border: 2px solid var(--border);
+    background: transparent;
+    padding: 1rem 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .level-btn .level-num {
+    display: block;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .level-btn .level-label { display: block; font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+
+  .level-btn:hover, .level-btn.active { border-color: var(--red); background: var(--red); }
+  .level-btn.active .level-num,
+  .level-btn.active .level-label,
+  .level-btn:hover .level-num,
+  .level-btn:hover .level-label { color: white; }
+
+  .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+  .section-btn {
+    border: 2px solid var(--border);
+    background: transparent;
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    font-family: 'Noto Sans JP', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .section-btn .icon { font-size: 1.4rem; }
+  .section-btn .info { flex: 1; }
+  .section-btn .info strong { display: block; font-size: 0.9rem; color: var(--ink); }
+  .section-btn .info span { font-size: 0.75rem; color: var(--muted); }
+  .section-btn .check {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    transition: all 0.2s;
+  }
+
+  .section-btn.active { border-color: var(--ink); background: var(--ink); }
+  .section-btn.active .info strong,
+  .section-btn.active .info span { color: var(--paper); }
+  .section-btn.active .check { background: var(--gold); border-color: var(--gold); color: white; }
+
+  .start-btn {
+    display: block; width: 100%;
+    background: var(--red); color: white;
+    border: none; padding: 1.2rem;
+    font-size: 1.1rem;
+    font-family: 'Shippori Mincho', serif;
+    letter-spacing: 0.15em;
+    cursor: pointer; transition: all 0.2s;
+    margin-top: 1.5rem;
+  }
+  .start-btn:hover { background: #a93226; }
+  .start-btn:disabled { background: var(--border); cursor: not-allowed; }
+
+  .exam-screen { display: none; animation: fadeIn 0.5s ease; }
+
+  .exam-progress {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 1.5rem; padding: 1rem 1.5rem;
+    background: var(--ink); color: var(--paper);
+  }
+
+  .progress-info { flex: 1; }
+  .progress-info .part-name { font-family: 'Shippori Mincho', serif; font-size: 1rem; letter-spacing: 0.05em; }
+  .progress-info .q-count { font-size: 0.75rem; color: var(--border); margin-top: 0.2rem; }
+
+  .progress-bar-wrap { width: 120px; }
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--gold); transition: width 0.4s ease; }
+  .progress-pct { font-size: 0.75rem; color: var(--border); text-align: right; margin-top: 0.3rem; }
+
+  .question-card {
+    background: white; border: 1px solid var(--border);
+    padding: 2rem 2.5rem; margin-bottom: 1rem; min-height: 200px;
+  }
+
+  .q-num { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1rem; }
+
+  .q-text {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.15rem; line-height: 1.9;
+    color: var(--ink); margin-bottom: 1.5rem;
+  }
+  .q-text .underline { border-bottom: 2px solid var(--red); padding-bottom: 1px; }
+
+  .reading-passage {
+    background: var(--light); border-left: 3px solid var(--gold);
+    padding: 1.2rem 1.5rem; margin-bottom: 1.5rem;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 0.95rem; line-height: 2; color: var(--ink);
+  }
+
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+
+  .option-btn {
+    border: 1.5px solid var(--border); background: transparent;
+    padding: 0.85rem 1rem; cursor: pointer; text-align: left;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 0.9rem;
+    color: var(--ink); transition: all 0.2s;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .option-btn .opt-label {
+    font-family: 'Shippori Mincho', serif; font-weight: 700;
+    font-size: 1rem; min-width: 1.2rem; color: var(--muted);
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--ink); background: var(--light); }
+  .option-btn.selected { border-color: var(--ink); background: var(--ink); color: white; }
+  .option-btn.selected .opt-label { color: var(--gold); }
+  .option-btn.correct { border-color: var(--success); background: #e8f5ee; color: var(--success); }
+  .option-btn.wrong { border-color: var(--fail); background: #fdecea; color: var(--fail); }
+  .option-btn.reveal-correct { border-color: var(--success); background: #e8f5ee; color: var(--success); }
+
+  .nav-btns { display: flex; gap: 1rem; margin-top: 1.5rem; }
+
+  .btn-secondary {
+    flex: 1; padding: 0.9rem;
+    border: 2px solid var(--border); background: transparent;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; transition: all 0.2s; color: var(--muted);
+  }
+  .btn-secondary:hover { border-color: var(--ink); color: var(--ink); }
+
+  .btn-primary {
+    flex: 2; padding: 0.9rem; border: none;
+    background: var(--ink); color: var(--paper);
+    font-family: 'Shippori Mincho', serif; font-size: 1rem;
+    letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary:hover { background: var(--red); }
+  .btn-primary:disabled { background: var(--border); cursor: not-allowed; }
+
+  .loading-card { background: white; border: 1px solid var(--border); padding: 3rem; text-align: center; }
+  .loading-brush {
+    font-family: 'Shippori Mincho', serif; font-size: 3rem;
+    animation: pulse 1.5s ease-in-out infinite;
+    display: block; margin-bottom: 1rem;
+  }
+  .loading-text { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.1em; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .results-screen { display: none; animation: fadeIn 0.5s ease; }
+
+  .score-board {
+    background: var(--ink); color: var(--paper);
+    padding: 3rem 2rem; text-align: center;
+    margin-bottom: 1.5rem; position: relative; overflow: hidden;
+  }
+  .score-board::after {
+    content: '合格';
+    position: absolute; font-family: 'Shippori Mincho', serif;
+    font-size: 10rem; opacity: 0.05;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .score-label { font-size: 0.8rem; letter-spacing: 0.2em; color: var(--border); margin-bottom: 0.5rem; }
+  .score-num { font-family: 'Shippori Mincho', serif; font-size: 5rem; color: var(--gold); line-height: 1; position: relative; }
+  .score-total { font-size: 1.5rem; color: var(--border); }
+  .score-pct { font-size: 1.1rem; color: var(--paper); margin-top: 0.5rem; letter-spacing: 0.1em; position: relative; }
+  .pass-badge {
+    display: inline-block; padding: 0.4rem 1.5rem; margin-top: 1rem;
+    font-family: 'Shippori Mincho', serif; font-size: 1rem;
+    letter-spacing: 0.15em; position: relative;
+  }
+  .pass-badge.pass { background: var(--gold); color: var(--ink); }
+  .pass-badge.fail { background: var(--red); color: white; }
+
+  .breakdown-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+  }
+  .breakdown-card { background: white; border: 1px solid var(--border); padding: 1.5rem; text-align: center; }
+  .breakdown-card .part { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+  .breakdown-card .bd-score { font-family: 'Shippori Mincho', serif; font-size: 2rem; color: var(--ink); }
+  .breakdown-card .out-of { font-size: 0.85rem; color: var(--muted); }
+
+  .review-section { background: white; border: 1px solid var(--border); padding: 2rem 2.5rem; margin-bottom: 1.5rem; }
+  .review-item { border-bottom: 1px solid var(--light); padding: 1.2rem 0; }
+  .review-item:last-child { border-bottom: none; }
+  .review-item .q-header { display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.6rem; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 0.35rem; }
+  .status-dot.correct { background: var(--success); }
+  .status-dot.wrong { background: var(--fail); }
+  .review-q { font-family: 'Noto Serif JP', serif; font-size: 0.95rem; color: var(--ink); flex: 1; }
+  .review-answers { font-size: 0.85rem; padding-left: 1.2rem; }
+  .review-answers .user-ans { color: var(--fail); }
+  .review-answers .correct-ans { color: var(--success); }
+  .review-answers .explanation { color: var(--muted); font-size: 0.8rem; margin-top: 0.3rem; }
+
+  .restart-btn {
+    display: block; width: 100%;
+    background: var(--red); color: white; border: none;
+    padding: 1.2rem; font-size: 1.1rem;
+    font-family: 'Shippori Mincho', serif; letter-spacing: 0.15em;
+    cursor: pointer; transition: all 0.2s; margin-bottom: 2rem;
+  }
+  .restart-btn:hover { background: #a93226; }
+
+  .error-msg {
+    background: #fdecea; border: 1px solid var(--fail);
+    color: var(--fail); padding: 1rem 1.5rem; font-size: 0.9rem; margin-bottom: 1rem;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 600px) {
+    .level-grid { grid-template-columns: repeat(3, 1fr); }
+    .section-grid { grid-template-columns: 1fr; }
+    .options { grid-template-columns: 1fr; }
+    .setup-card, .question-card, .review-section { padding: 1.5rem; }
+    .score-num { font-size: 3.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>JLPT 模擬考試</h1>
+  <p>日本語能力試験 練習システム</p>
+</div>
+
+<div class="container">
+
+  <!-- SETUP -->
+  <div class="setup-screen" id="setupScreen">
+    <div class="setup-card">
+      <div class="section-label">① 選擇級別</div>
+      <div class="level-grid">
+        <button class="level-btn" data-level="N5" onclick="selectLevel(this)"><span class="level-num">N5</span><span class="level-label">初級</span></button>
+        <button class="level-btn" data-level="N4" onclick="selectLevel(this)"><span class="level-num">N4</span><span class="level-label">初中級</span></button>
+        <button class="level-btn active" data-level="N3" onclick="selectLevel(this)"><span class="level-num">N3</span><span class="level-label">中級</span></button>
+        <button class="level-btn" data-level="N2" onclick="selectLevel(this)"><span class="level-num">N2</span><span class="level-label">中高級</span></button>
+        <button class="level-btn" data-level="N1" onclick="selectLevel(this)"><span class="level-num">N1</span><span class="level-label">高級</span></button>
+      </div>
+    </div>
+
+    <div class="setup-card">
+      <div class="section-label">② 選擇練習部分（可多選）</div>
+      <div class="section-grid">
+        <button class="section-btn active" data-section="vocabulary" onclick="toggleSection(this)">
+          <span class="icon">📖</span>
+          <span class="info"><strong>文字・語彙</strong><span>漢字読み、語彙意味</span></span>
+          <span class="check">✓</span>
+        </button>
+        <button class="section-btn active" data-section="grammar" onclick="toggleSection(this)">
+          <span class="icon">✏️</span>
+          <span class="info"><strong>文法</strong><span>助詞、文型、接続</span></span>
+          <span class="check">✓</span>
+        </button>
+        <button class="section-btn active" data-section="reading" onclick="toggleSection(this)">
+          <span class="icon">📄</span>
+          <span class="info"><strong>讀解</strong><span>文章理解、長文</span></span>
+          <span class="check">✓</span>
+        </button>
+        <button class="section-btn" data-section="listening" onclick="toggleSection(this)">
+          <span class="icon">🎧</span>
+          <span class="info"><strong>聴解（文字模擬）</strong><span>場面描述、對話理解</span></span>
+          <span class="check"></span>
+        </button>
+      </div>
+      <button class="start-btn" onclick="startExam()">開始考試 試験開始 →</button>
+    </div>
+  </div>
+
+  <!-- EXAM -->
+  <div class="exam-screen" id="examScreen">
+    <div class="exam-progress">
+      <div class="progress-info">
+        <div class="part-name" id="partName">文字・語彙</div>
+        <div class="q-count" id="qCount">第 1 題，共 5 題</div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="progress-pct" id="progressPct">0%</div>
+      </div>
+    </div>
+    <div id="questionArea"></div>
+    <div class="nav-btns">
+      <button class="btn-secondary" onclick="skipQuestion()">跳過</button>
+      <button class="btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>下一題 →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-screen" id="resultsScreen">
+    <div class="score-board">
+      <div class="score-label">最終得分 FINAL SCORE</div>
+      <div class="score-num" id="finalScore">0<span class="score-total">/0</span></div>
+      <div class="score-pct" id="finalPct">0%</div>
+      <div class="pass-badge" id="passBadge">-</div>
+    </div>
+    <div class="breakdown-grid" id="breakdownGrid"></div>
+    <div class="review-section">
+      <div class="section-label">題目回顧 問題レビュー</div>
+      <div id="reviewList"></div>
+    </div>
+    <button class="restart-btn" onclick="restartExam()">再試一次 もう一度 →</button>
+  </div>
+
+</div>
+
+<script>
+  const SECTION_NAMES = {
+    vocabulary: '文字・語彙',
+    grammar: '文法',
+    reading: '讀解',
+    listening: '聴解（文字模擬）'
+  };
+
+  // ✅ Points to your Vercel serverless function — no API key exposed
+  const API_ENDPOINT = '/api/chat';
+
+  let selectedLevel = 'N3';
+  let selectedSections = new Set(['vocabulary', 'grammar', 'reading']);
+  let allQuestions = [], currentQ = 0, userAnswers = [], partBoundaries = [], answered = false;
+
+  function selectLevel(btn) {
+    document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedLevel = btn.dataset.level;
+  }
+
+  function toggleSection(btn) {
+    const sec = btn.dataset.section;
+    if (selectedSections.has(sec)) {
+      if (selectedSections.size === 1) return;
+      selectedSections.delete(sec);
+      btn.classList.remove('active');
+      btn.querySelector('.check').textContent = '';
+    } else {
+      selectedSections.add(sec);
+      btn.classList.add('active');
+      btn.querySelector('.check').textContent = '✓';
+    }
+  }
+
+  async function startExam() {
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('examScreen').style.display = 'block';
+    allQuestions = []; partBoundaries = []; userAnswers = []; currentQ = 0;
+    showLoading('正在生成題目... AI が問題を作成中...');
+
+    for (const sec of [...selectedSections]) {
+      const questions = await generateQuestions(selectedLevel, sec);
+      if (questions && questions.length) {
+        partBoundaries.push({ section: sec, start: allQuestions.length, count: questions.length });
+        allQuestions.push(...questions.map(q => ({ ...q, section: sec })));
+        userAnswers.push(...questions.map(() => null));
+      }
+    }
+
+    if (allQuestions.length === 0) { showError('題目生成失敗，請重試。'); return; }
+    renderQuestion(0);
+  }
+
+  function showLoading(msg) {
+    document.getElementById('questionArea').innerHTML = `
+      <div class="loading-card">
+        <span class="loading-brush">筆</span>
+        <div class="loading-text">${msg}</div>
+      </div>`;
+    document.getElementById('nextBtn').disabled = true;
+  }
+
+  function showError(msg) {
+    document.getElementById('questionArea').innerHTML = `<div class="error-msg">${msg}</div>`;
+  }
+
+  async function generateQuestions(level, section) {
+    const prompts = {
+      vocabulary: `Generate exactly 5 JLPT ${level} vocabulary/kanji multiple choice questions. Return ONLY a JSON array, no markdown. Each object: {"question":"sentence with tested word marked as **word**","options":["A) ...","B) ...","C) ...","D) ..."],"answer":"A","explanation":"Chinese explanation"}`,
+      grammar: `Generate exactly 5 JLPT ${level} grammar multiple choice questions. Return ONLY a JSON array, no markdown. Each object: {"question":"sentence with ___ blank","options":["A) ...","B) ...","C) ...","D) ..."],"answer":"B","explanation":"Chinese explanation"}`,
+      reading: `Generate 1 reading passage with 3 comprehension questions for JLPT ${level}. Return ONLY a JSON array, no markdown. Each of 3 objects shares the same passage: {"passage":"Japanese text 150-200 chars","question":"comprehension question","options":["A) ...","B) ...","C) ...","D) ..."],"answer":"C","explanation":"Chinese explanation"}`,
+      listening: `Generate 4 JLPT ${level} listening-simulation questions (text-based dialogue). Return ONLY a JSON array, no markdown. Each: {"question":"Japanese dialogue scene + question","options":["A) ...","B) ...","C) ...","D) ..."],"answer":"A","explanation":"Chinese explanation"}`
+    };
+
+    try {
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1500,
+          messages: [{ role: 'user', content: prompts[section] }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content.map(c => c.text || '').join('').trim();
+      return JSON.parse(text.replace(/```json\n?|```\n?/g, '').trim());
+    } catch (e) {
+      console.error('Error generating', section, e);
+      return null;
+    }
+  }
+
+  function getCurrentPart() {
+    for (const p of partBoundaries) {
+      if (currentQ >= p.start && currentQ < p.start + p.count) return p;
+    }
+    return partBoundaries[0];
+  }
+
+  function renderQuestion(idx) {
+    answered = false;
+    document.getElementById('nextBtn').disabled = true;
+    document.getElementById('nextBtn').textContent = idx < allQuestions.length - 1 ? '下一題 →' : '查看成績 →';
+
+    const q = allQuestions[idx];
+    const part = getCurrentPart();
+    const qInPart = idx - part.start + 1;
+
+    document.getElementById('partName').textContent = SECTION_NAMES[part.section];
+    document.getElementById('qCount').textContent = `第 ${idx + 1} 題，共 ${allQuestions.length} 題`;
+
+    const pct = Math.round((idx / allQuestions.length) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+
+    const passageHtml = q.passage ? `<div class="reading-passage">${q.passage}</div>` : '';
+    const qText = q.question.replace(/\*\*(.*?)\*\*/g, '<span class="underline">$1</span>');
+    const labels = ['A','B','C','D'];
+
+    const optionsHtml = q.options.map((opt, i) => {
+      const clean = opt.replace(/^[ABCD][）)\.]?\s*/, '');
+      return `<button class="option-btn" onclick="selectAnswer(this,'${labels[i]}')" data-opt="${labels[i]}">
+        <span class="opt-label">${labels[i]}</span><span>${clean}</span>
+      </button>`;
+    }).join('');
+
+    document.getElementById('questionArea').innerHTML = `
+      <div class="question-card">
+        <div class="q-num">問題 ${qInPart}　/　${SECTION_NAMES[part.section]}</div>
+        ${passageHtml}
+        <div class="q-text">${qText}</div>
+        <div class="options">${optionsHtml}</div>
+        <div id="feedbackMsg" style="margin-top:1rem;font-size:0.85rem;"></div>
+      </div>`;
+  }
+
+  function selectAnswer(btn, opt) {
+    if (answered) return;
+    answered = true;
+    const q = allQuestions[currentQ];
+    userAnswers[currentQ] = opt;
+
+    document.querySelectorAll('.option-btn').forEach(b => {
+      b.disabled = true;
+      if (b.dataset.opt === q.answer) b.classList.add('reveal-correct');
+    });
+
+    if (opt === q.answer) {
+      btn.classList.add('correct');
+      document.getElementById('feedbackMsg').innerHTML = `<span style="color:var(--success)">✓ 正確！</span> ${q.explanation || ''}`;
+    } else {
+      btn.classList.add('wrong');
+      document.getElementById('feedbackMsg').innerHTML = `<span style="color:var(--fail)">✗ 錯誤。</span> ${q.explanation || ''}`;
+    }
+    document.getElementById('nextBtn').disabled = false;
+  }
+
+  function skipQuestion() {
+    if (!answered) { userAnswers[currentQ] = null; answered = true; nextQuestion(); }
+  }
+
+  function nextQuestion() {
+    if (currentQ < allQuestions.length - 1) { currentQ++; renderQuestion(currentQ); }
+    else showResults();
+  }
+
+  function showResults() {
+    document.getElementById('examScreen').style.display = 'none';
+    document.getElementById('resultsScreen').style.display = 'block';
+
+    let total = 0;
+    allQuestions.forEach((q, i) => { if (userAnswers[i] === q.answer) total++; });
+    const pct = Math.round((total / allQuestions.length) * 100);
+
+    document.getElementById('finalScore').innerHTML = `${total}<span class="score-total">/${allQuestions.length}</span>`;
+    document.getElementById('finalPct').textContent = pct + '%';
+    const badge = document.getElementById('passBadge');
+    badge.textContent = pct >= 60 ? '合格 PASS' : '不合格 FAIL';
+    badge.className = 'pass-badge ' + (pct >= 60 ? 'pass' : 'fail');
+
+    const grid = document.getElementById('breakdownGrid');
+    grid.innerHTML = '';
+    for (const p of partBoundaries) {
+      let pt = 0;
+      for (let i = p.start; i < p.start + p.count; i++) { if (userAnswers[i] === allQuestions[i].answer) pt++; }
+      grid.innerHTML += `<div class="breakdown-card"><div class="part">${SECTION_NAMES[p.section]}</div><div class="bd-score">${pt}<span class="out-of">/${p.count}</span></div></div>`;
+    }
+
+    const list = document.getElementById('reviewList');
+    list.innerHTML = '';
+    allQuestions.forEach((q, i) => {
+      const correct = userAnswers[i] === q.answer;
+      const skipped = userAnswers[i] === null;
+      const qText = q.question.replace(/\*\*(.*?)\*\*/g, '【$1】');
+      list.innerHTML += `
+        <div class="review-item">
+          <div class="q-header">
+            <div class="status-dot ${correct ? 'correct' : 'wrong'}"></div>
+            <div class="review-q">${qText.substring(0, 90)}${qText.length > 90 ? '…' : ''}</div>
+          </div>
+          <div class="review-answers">
+            ${skipped ? '<span class="user-ans">已跳過</span>' :
+              correct ? `<span class="correct-ans">✓ 答案：${userAnswers[i]}（正確）</span>` :
+              `<span class="user-ans">✗ 你的答案：${userAnswers[i] || '未答'}</span>　<span class="correct-ans">✓ 正確：${q.answer}</span>`}
+            ${q.explanation ? `<div class="explanation">${q.explanation}</div>` : ''}
+          </div>
+        </div>`;
+    });
+  }
+
+  function restartExam() {
+    document.getElementById('resultsScreen').style.display = 'none';
+    document.getElementById('setupScreen').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+</script>
+<footer style="background: var(--ink); color: var(--border); text-align: center; padding: 1.2rem; font-size: 0.78rem; letter-spacing: 0.1em; margin-top: 2rem;">
+  Copyright © Billion Studio 2026. All rights reserved.
+</footer>
+
+</body>
+</html>
